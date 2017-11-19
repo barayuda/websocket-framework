@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Game - Websocket Framework</title>
+    <title>Game - RPG - Websocket Framework</title>
 
     <!-- CSS stylesheets -->
     <link href="../lib/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
@@ -31,8 +31,8 @@
                     <ul class="nav">
                         <li><a href="../helloworld/index.html"><i class="icon-bullhorn"></i> Hello World</a></li>
                         <li><a href="../admin/index.html"><i class="icon-off"></i> AdminCP</a></li>
-                        <li><a href="../chat/index.html"><i class="icon-comment"></i> Simple Chat</a></li>
-                        <li class="active"><a href="../game/index.html"><i class="icon-screenshot"></i> Simple Game</a></li>
+                        <li><a href="../chat/index.html"><i class="icon-comment"></i> Chat</a></li>
+                        <li class="active"><a href="../game-rpg/index.html"><i class="icon-screenshot"></i> RPG</a></li>
                     </ul>
                 </div>
 
@@ -42,10 +42,9 @@
 
 
     <div class="container" id="demo">
-        <a href="javascript:void(0);" class="btn" onclick="client.socket.sys_send('login','root');">login</a>
-        <a href="javascript:void(0);" class="btn" onclick="client.socket.sys_send('reboot');">reboot server</a>
+        <a href="javascript:void(0);" class="btn btn-danger" onclick="client.socket.sys_send('login','root'); client.socket.sys_send('reboot');">reboot server</a>
         <a href="javascript:void(0);" class="btn" onclick="client.socket.send('teleport', {x: jQuery(client.map).width() * 0.5, y: jQuery(client.map).height() * 0.5});">teleport center</a>
-        <a href="javascript:void(0);" class="btn" onclick="client.socket.send('create_npc');">+1 NPC</a>
+        <a href="javascript:void(0);" class="btn btn-success" onclick="client.socket.send('create_npc');">+1 NPC</a>
         <a href="javascript:void(0);" class="btn" onclick="client.socket.send('kill_npcs');">KILL NPCs</a>
         <a href="javascript:void(0);" class="btn" onclick="client.socket.send('attract_npcs', confirm('Do you want to attract all NPCs ?'));">Attract NPCs</a>
 
@@ -55,13 +54,22 @@
         </div>
 
         <div id="scene">
+            <!-- <div class="ui exp">
+                <div class="bar"></div>
+            </div>
+            <div class="ui lvl">lvl ?</div> -->
+            <div id="inventory"></div>
             <div id="map">
-                <div style="position:absolute; top:50%; left:50%;"><img src="images/decal.png" style="position:relative; left:-128px; top:-128px" alt=""></div>
+                <div style="position:absolute; top:50%; left:50%;">
+                    <img src="images/decal.png" style="position:relative; left:-128px; top:-128px" alt="">
+                </div>
             </div>
         </div>
         <p class="muted">
             <strong>WASD/arrows</strong> = move, <strong>SPACE</strong> = jump, <strong>SHIFT</strong> = run, <strong>T</strong> = talk
-            <br>Sprites taken <a href="http://untamed.wild-refuge.net/rmxpresources.php?characters" target="_blank">here</a>
+            <br>
+            <strong>CLICK_LEFT</strong> = attack
+            <br>Characters sprites taken <a href="http://untamed.wild-refuge.net/rmxpresources.php?characters" target="_blank">here</a>, and objects sprite taken <a href="http://www.pixeljoint.com/pixelart/44976.htm" target="_blank">here</a>
         </p>
     </div>
 
@@ -72,6 +80,7 @@
     <script src="../lib/EventsDispatcher.js"></script>
     <script src="js/Game.js"></script>
     <script src="js/Character.js"></script>
+    <script src="js/Game_Object.js"></script>
     <script>
 
         // Client Initialization

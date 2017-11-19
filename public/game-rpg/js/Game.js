@@ -8,7 +8,9 @@ function Game(address, port)
 	{
 		this.scene = document.getElementById("scene");
 		this.map = document.getElementById("map");
+		this.inventory = document.getElementById("inventory");
 		this.players = {};
+		this.objects = Array();
 		this.keypressed = {};
 		this.fps = 0;
 
@@ -59,32 +61,44 @@ function Game(address, port)
 	{
 		switch(data.action)
 		{
+			// triggered when player first sync
+			case "initial_sync" :
+				this.hero
+				.sync(data.content)
+				.change_skin(data.content.skin)
+				.place(data.content.x, data.content.y);
+
+				this.update_camera(0);
+
+				if(this.loop_interval)
+				{
+					clearInterval(this.loop_interval);
+				}
+
+				if(this.fps > 0)
+				{
+					this.loop_interval = setInterval(this.socket.proxy(this.loop, this), 1000 / this.fps);
+					this.loop();
+				}
+
+				if(data.content.area)
+				{
+					areasButtons.parent().find("a[data-area='" + data.content.area + "']").trigger("click");
+				}
+
+				if(data.content.inventory)
+				{
+					this.update_inventory(data.content.inventory);
+				}
+			break;
+
 			// triggered when server send our real state to syncronize the browser
 			case "sync" :
-				if(data.content.initial_sync)
+				this.hero.sync(data.content);
+
+				if(data.content.inventory)
 				{
-					this.hero.sync(data.content.initial_sync.props).change_skin(data.content.initial_sync.skin).place();
-					this.update_camera(0);
-
-					if(this.loop_interval)
-					{
-						clearInterval(this.loop_interval);
-					}
-
-					if(this.fps > 0)
-					{
-						this.loop_interval = setInterval(this.socket.proxy(this.loop, this), 1000 / this.fps);
-						this.loop();
-					}
-
-					if(data.content.initial_sync.area)
-					{
-						areasButtons.parent().find("a[data-area='" + data.content.initial_sync.area + "']").trigger("click");
-					}
-				}
-				else
-				{
-					this.hero.sync(data.content);
+					this.update_inventory(data.content.inventory);
 				}
 			break;
 
@@ -103,6 +117,22 @@ function Game(address, port)
 				}
 			break;
 
+			// when we receives a list of objects
+			case "objects_list" :
+				// delete old ones
+				for(var i in this.objects)
+				{
+					this.objects[i].remove();
+					delete this.objects[i];
+				}
+
+				// add new objects
+				for(var i in data.content)
+				{
+					this.insert_object(data.content[i]);
+				}
+			break;
+
 			// triggered when we teleport
 			case "teleport" :
 				this.hero.teleport(data.content.x, data.content.y);
@@ -113,6 +143,11 @@ function Game(address, port)
 			// triggered when a new player join the game
 			case "new_player" :
 				this.insert_player(data.content.id, data.content.props);
+			break;
+
+			// triggered when a new object get dropped in the game
+			case "new_object" :
+				this.insert_object(data.content);
 			break;
 
 			// triggered when an other player position change
@@ -167,6 +202,9 @@ function Game(address, port)
 		.keydown(jQuery.proxy(this.on_keyevent, this))
 		.keyup(jQuery.proxy(this.on_keyevent, this));
 
+		jQuery(this.map)
+		.mousedown(jQuery.proxy(this.on_mouseevent, this));
+
 		jQuery(window).blur(function()
 		{
 			var a = Array(87, 65, 83, 68);
@@ -176,6 +214,14 @@ function Game(address, port)
 			}
 		})
 		.resize(jQuery.proxy(this.update_camera, this, 0));
+	}
+
+	this.on_mouseevent = function(e)
+	{
+		e.preventDefault();
+		var x = e.pageX - jQuery(e.currentTarget).offset().left;
+		var y = e.pageY - jQuery(e.currentTarget).offset().top;
+		this.socket.send("mouseevent", {type: e.type, x: Math.round(x), y: Math.round(y)});
 	}
 
 	// handler executed when player press or release a key on his keyboard
@@ -249,7 +295,7 @@ function Game(address, port)
 		}
 
 		this.players[id] = new Character(props.username, this.map, props);
-		this.players[id].sync(props).place().update_depth();
+		this.players[id].sync(props).place(props.x, props.y).update_depth();
 	}
 
 	// remove a player instance in the game
@@ -257,6 +303,25 @@ function Game(address, port)
 	{
 		this.players[id].disappear();
 		delete this.players[id];
+	}
+
+	// create a new object instance in the game
+	this.insert_object = function(props)
+	{
+		this.objects.push(new Game_Object(props.name, this.map, props.pos.x, props.pos.y));
+	}
+
+	// update the player inventory in UI
+	this.update_inventory = function(objects)
+	{
+		console.log(objects);
+		this.inventory.innerHTML = "";
+
+		for(var i in objects)
+		{
+			new Game_Object(objects[i], this.inventory, 0, 0);
+			//this.inventory.innerHTML += objects[i] + ", ";
+		}
 	}
 
 	// move the whole scene to always see player, this simulate a camera effect
@@ -268,8 +333,8 @@ function Game(address, port)
 		var mapH = jQuery(this.map).height();
 		var heroW = this.hero ? jQuery(this.hero.view).width() : 0;
 		var heroH = this.hero ? jQuery(this.hero.view).height() : 0;
-		var heroL = this.hero ? this.hero.props.x : 0;
-		var heroT = this.hero ? this.hero.props.y : 0;
+		var heroL = this.hero ? this.hero.estimatedX : 0;
+		var heroT = this.hero ? this.hero.estimatedY : 0;
 		var mapTopMax = -(mapH - sceneH);
 		var mapLeftMax = -(mapW - sceneW);
 		var left = 0;

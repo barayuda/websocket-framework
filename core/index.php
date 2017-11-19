@@ -2,7 +2,7 @@
 ob_start();
 
 // get config file
-$CONFIG = @parse_ini_file("config.ini");
+$CONFIG = file_exists("config.ini") ? @parse_ini_file("config.ini") : false;
 if(!$CONFIG)
 {
 	$CONFIG = parse_ini_file("config.template.ini");
@@ -18,7 +18,7 @@ foreach($argv as $k => $v)
 	}
 }
 
-define("SERVER_PATH", $argv[0]);											// path of the server php file
+define("SERVER_ROOT", dirname(realpath($argv[0])) . "/");					// path of the server root
 define("SCRIPT_OPTIONS", $options); 										// list of all options passed to the script
 define("REMOTE_ADMIN_ACCESS", in_array("-admin", $argv) ? true : false);	// (true|false), define if the server is controlable from a javascript client
 define("VERBOSE_MODE", in_array("-verbose", $argv) ? true : false);			// (true|false), define if the server will output what is happening

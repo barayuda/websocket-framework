@@ -5,7 +5,8 @@ data/*
 TODO.txt
 public/mmouse
 public/sandbox
-my_servers/mmouse.php
-my_servers/sandbox.php
+servers/mmouse
+servers/sandbox
 executables/mmouse.bat
-executables/sandbox.bat
+executables/windows/sandbox.bat
+executables/linux/sandbox.sh
